@@ -1,0 +1,10 @@
+{
+  "name": "rwarsol-nearby-api",
+  "version": "1.0.0",
+  "description": "API for finding nearby architecture locations from Google Sheets",
+  "main": "index.js",
+  "type": "module",
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}
