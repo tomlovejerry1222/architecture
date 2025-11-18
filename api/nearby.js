@@ -26,11 +26,21 @@ async function loadData() {
   const now = Date.now();
   if (CACHE.data && now - CACHE.ts < CACHE_TTL_MS) return CACHE.data;
 
-  const url = process.env.api.SHEET_API_URL;
-  if (!url) throw new Error("SHEET_API_URL not set");
+  const url = process.env.SHEET_API_URL;
+
+  if (!url) {
+    // 保護機制：環境變數沒設定時回傳明確訊息
+    throw new Error(
+      "SHEET_API_URL is not set. Please check your Vercel Environment Variables."
+    );
+  }
 
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to fetch data: ${res.status}`);
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch data from SHEET_API_URL: ${res.status}`);
+  }
+
   const data = await res.json();
 
   CACHE = { data, ts: now };
