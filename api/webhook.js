@@ -2,178 +2,153 @@
 import crypto from "crypto";
 import fetch from "node-fetch";
 
+// -------------------------
+// 1. 讀取環境變數
+// -------------------------
 const LINE_CHANNEL_SECRET = process.env.LINE_CHANNEL_SECRET;
 const LINE_CHANNEL_ACCESS_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN;
-const SHEET_API_URL = process.env.SHEET_API_URL; // 你的 sheet.best API (可選，若 nearby API 會呼叫此值）
-const NEARBY_API = process.env.NEARBY_API_URL || `${process.env.BASE_URL || ''}/api/nearby`; // 若你把 nearby 放在同個 Vercel，填 https://architecture-h7wp.vercel.app/api/nearby
-const BASE_URL = process.env.BASE_URL || ""; // 你的網站根 URL，用於建築介紹頁連結
+
+const BASE_URL = process.env.BASE_URL || ""; 
+const NEARBY_API_URL = process.env.NEARBY_API_URL; // 你的 nearby API
 
 if (!LINE_CHANNEL_SECRET || !LINE_CHANNEL_ACCESS_TOKEN) {
-  console.warn("請在環境變數設定 LINE_CHANNEL_SECRET 與 LINE_CHANNEL_ACCESS_TOKEN");
+  console.warn("⚠️ 請設定 LINE_CHANNEL_SECRET 與 LINE_CHANNEL_ACCESS_TOKEN");
 }
 
-// 驗證 LINE signature
-function verifySignature(bodyBuffer, signature) {
-  const hmac = crypto.createHmac("sha256", LINE_CHANNEL_SECRET);
-  hmac.update(bodyBuffer);
+// -------------------------
+// 2. 驗證 LINE 簽名
+// -------------------------
+function validateSignature(body, signature) {
+  const hmac = crypto.createHmac("SHA256", LINE_CHANNEL_SECRET);
+  hmac.update(body);
   const expected = hmac.digest("base64");
   return expected === signature;
 }
 
-// 建 Flex Bubble 卡片
-function buildFlexBubble(item) {
-  // 假設 item 含 name, imageUrl, latitude, longitude, description, link, id
-  const title = item.name || item.caseName || "未命名建築";
-  const img = item.imageUrl || item.picture || "";
-  const desc = item.description || item.note || "";
-  const lat = item.latitude || item.lat;
-  const lng = item.longitude || item.lng;
-  const detailUrl = item.link || (BASE_URL ? `${BASE_URL}/detail/${item.id || encodeURIComponent(title)}` : item.googleMapUrl || "");
-  // Google Maps 導航連結
-  const mapsUrl = (lat && lng) ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}` : (item.googleMapUrl || "");
-
-  return {
-    type: "bubble",
-    size: "micro",
-    hero: img ? {
-      type: "image",
-      url: img,
-      size: "full",
-      aspectMode: "cover",
-      aspectRatio: "16:9",
-      action: {
-        type: "uri",
-        uri: detailUrl || mapsUrl || "https://google.com"
-      }
-    } : undefined,
-    body: {
-      type: "box",
-      layout: "vertical",
-      spacing: "sm",
-      contents: [
-        { type: "text", text: title, wrap: true, weight: "bold", size: "sm" },
-        ...(desc ? [{ type: "text", text: desc, wrap: true, size: "xs", color: "#666666" }] : [])
-      ]
-    },
-    footer: {
-      type: "box",
-      layout: "vertical",
-      contents: [
-        {
-          type: "button",
-          action: { type: "uri", label: "查看詳情", uri: detailUrl || mapsUrl || "https://google.com" },
-          height: "sm"
-        },
-        {
-          type: "button",
-          action: { type: "uri", label: "導航到這裡", uri: mapsUrl || detailUrl || "https://google.com" },
-          style: "secondary",
-          height: "sm"
-        }
-      ]
-    }
-  };
-}
-
-// 將 nearby API 回傳的 items 轉成 Flex message（carousel）
-function buildFlexMessageFromResults(results) {
-  const bubbles = results.map(it => buildFlexBubble(it));
-  return {
-    type: "flex",
-    altText: "附近的設計建築",
-    contents: { type: "carousel", contents: bubbles }
-  };
-}
-
-// 回傳 LINE Reply API
-async function replyToLine(replyToken, messages) {
-  const res = await fetch("https://api.line.me/v2/bot/message/reply", {
+// -------------------------
+// 3. Reply API 套件
+// -------------------------
+async function replyMessage(replyToken, messages) {
+  await fetch("https://api.line.me/v2/bot/message/reply", {
     method: "POST",
     headers: {
+      "Content-Type": "application/json",
       Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
-      "Content-Type": "application/json"
     },
     body: JSON.stringify({
       replyToken,
-      messages: Array.isArray(messages) ? messages : [messages]
-    })
+      messages,
+    }),
   });
-  if (!res.ok) {
-    const t = await res.text();
-    console.error("replyToLine error", res.status, t);
-  }
 }
 
-// 主 handler
+// -------------------------
+// 4. 主 Webhook Handler
+// -------------------------
 export default async function handler(req, res) {
-  try {
-    if (req.method !== "POST") return res.status(200).send("ok");
+  if (req.method !== "POST") return res.status(405).end();
 
-    // Vercel 會提供 raw body buffer，若無需 buffer 可直接用 req.body
-    const signature = req.headers["x-line-signature"];
-    const bodyBuffer = Buffer.from(req.rawBody || JSON.stringify(req.body || {}));
+  const signature = req.headers["x-line-signature"];
+  const body = JSON.stringify(req.body);
 
-    // 驗證
-    if (!verifySignature(bodyBuffer, signature)) {
-      console.warn("LINE signature 驗證失敗");
-      // 仍回 200 避免多次重試
-      return res.status(200).send("invalid signature");
-    }
-
-    const events = req.body && req.body.events ? req.body.events : [];
-
-    // 處理每個 event
-    for (const event of events) {
-      if (event.type === "message" && event.message.type === "location") {
-        const lat = event.message.latitude;
-        const lng = event.message.longitude;
-        const replyToken = event.replyToken;
-
-        // 呼叫附近搜尋 API（你的 nearby API）
-        // 範例: GET /api/nearby?lat=25.03&lng=121.56&limit=5
-        const nearbyUrl = `${NEARBY_API}?lat=${lat}&lng=${lng}&limit=5&max_distance_m=3000`;
-        const nearRes = await fetch(nearbyUrl);
-        const nearJson = await nearRes.json();
-
-        const results = (nearJson && nearJson.results) ? nearJson.results : [];
-
-        if (results.length === 0) {
-          await replyToLine(replyToken, { type: "text", text: "抱歉，附近沒有符合條件的建築資料。" });
-        } else {
-          const flex = buildFlexMessageFromResults(results);
-          await replyToLine(replyToken, flex);
-        }
-      } else if (event.type === "message" && event.message.type === "text") {
-        // 例如指令 "找附近建築"→引導使用者傳位置
-        const txt = event.message.text.trim();
-        const replyToken = event.replyToken;
-        if (txt.includes("找附近") || txt.includes("附近建築")) {
-          // Quick reply 提示使用者傳位置（用戶點選會開啟位置分享）
-          const quickReply = {
-            type: "text",
-            text: "請傳送你的位置（點選下方按鈕）",
-            quickReply: {
-              items: [
-                {
-                  type: "action",
-                  action: { type: "location", label: "傳送位置" }
-                }
-              ]
-            }
-          };
-          await replyToLine(replyToken, quickReply);
-        } else {
-          // 預設回應（可改）
-          await replyToLine(replyToken, { type: "text", text: "請傳送位置或輸入「找附近」以查詢附近建築。" });
-        }
-      } else if (event.type === "postback") {
-        // 可用來處理卡片按鈕的 postback
-      }
-    }
-
-    return res.status(200).send("ok");
-  } catch (err) {
-    console.error(err);
-    return res.status(500).send(err.message);
+  // 👉 進行簽名驗證（必須）
+  if (!validateSignature(body, signature)) {
+    return res.status(403).send("Invalid signature");
   }
+
+  const events = req.body.events;
+
+  for (const event of events) {
+    // 只處理「傳送位置」
+    if (event.type === "message" && event.message.type === "location") {
+      const { latitude, longitude } = event.message;
+
+      // -------------------------
+      // 5. 呼叫 Nearby API
+      // -------------------------
+      const apiUrl = `${NEARBY_API_URL}?lat=${latitude}&lng=${longitude}`;
+      const response = await fetch(apiUrl);
+      const places = await response.json();
+
+      // 若沒有結果
+      if (!places.length) {
+        await replyMessage(event.replyToken, [
+          { type: "text", text: "附近找不到建築作品 😢" },
+        ]);
+        continue;
+      }
+
+      // -------------------------
+      // 6. 產生 Flex Message
+      // -------------------------
+      const bubbles = places.slice(0, 5).map((item) => ({
+        type: "bubble",
+        hero: {
+          type: "image",
+          url: item.image || "https://placehold.co/600x400",
+          size: "full",
+          aspectRatio: "20:13",
+          aspectMode: "cover"
+        },
+        body: {
+          type: "box",
+          layout: "vertical",
+          contents: [
+            {
+              type: "text",
+              text: item.caseName,
+              weight: "bold",
+              size: "lg",
+            },
+            {
+              type: "text",
+              text: item.author || "Unknown architect",
+              size: "sm",
+              color: "#888888",
+            },
+          ],
+        },
+        footer: {
+          type: "box",
+          layout: "vertical",
+          contents: [
+            {
+              type: "button",
+              style: "primary",
+              action: {
+                type: "uri",
+                label: "查看介紹頁",
+                uri: `${BASE_URL}/building/${item.id}`,
+              },
+            },
+            {
+              type: "button",
+              style: "secondary",
+              action: {
+                type: "uri",
+                label: "Google 導航",
+                uri: `https://maps.google.com/?q=${item.lat},${item.lng}`,
+              },
+            },
+          ],
+        },
+      }));
+
+      const flexMessage = {
+        type: "flex",
+        altText: "附近的建築作品",
+        contents: {
+          type: "carousel",
+          contents: bubbles,
+        },
+      };
+
+      // -------------------------
+      // 7. Reply 回 LINE 用戶
+      // -------------------------
+      await replyMessage(event.replyToken, [flexMessage]);
+    }
+  }
+
+  res.status(200).send("OK");
 }
