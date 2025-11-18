@@ -57,7 +57,7 @@ export default async function handler(req, res) {
       });
     }
 
-    let lat, lng, limit = 5, max_distance_m = 2000;
+    let lat, lng, limit = 5, max_distance_m = 200000;
 
     if (req.method === "GET") {
       lat = parseFloat(req.query.lat);
