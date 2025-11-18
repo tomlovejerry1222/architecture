@@ -29,9 +29,9 @@ async function loadData() {
   const url = process.env.SHEET_API_URL;
 
   if (!url) {
-    // 保護機制：環境變數沒設定時回傳明確訊息
+    // 如果環境變數沒設定，回傳清楚錯誤
     throw new Error(
-      "SHEET_API_URL is not set. Please check your Vercel Environment Variables."
+      "SHEET_API_URL is undefined. 請確認 Vercel Environment Variables 是否正確設定。"
     );
   }
 
@@ -49,6 +49,14 @@ async function loadData() {
 
 export default async function handler(req, res) {
   try {
+    // 先檢查環境變數
+    if (!process.env.SHEET_API_URL) {
+      return res.status(500).json({
+        error:
+          "SHEET_API_URL is undefined. 請確認 Vercel Environment Variables 是否正確設定。",
+      });
+    }
+
     let lat, lng, limit = 5, max_distance_m = 2000;
 
     if (req.method === "GET") {
