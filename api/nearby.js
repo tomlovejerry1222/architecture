@@ -26,7 +26,7 @@ async function loadData() {
   const now = Date.now();
   if (CACHE.data && now - CACHE.ts < CACHE_TTL_MS) return CACHE.data;
 
-  const url = process.env.api.sheetbest.com/sheets/f78436e4-a524-4dfb-966a-92d6aca7367e;
+  const url = process.env.api.SHEET_API_URL;
   if (!url) throw new Error("SHEET_API_URL not set");
 
   const res = await fetch(url);
