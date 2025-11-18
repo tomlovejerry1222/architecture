@@ -11,7 +11,7 @@ function haversine(lat1, lon1, lat2, lon2) {
   const toRad = (v) => (v * Math.PI) / 180;
   const R = 6371000;
   const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lat2 - lon1);
+  const dLon = toRad(lon2 - lon1);
 
   const a =
     Math.sin(dLat / 2) ** 2 +
@@ -27,8 +27,10 @@ async function loadData() {
   if (CACHE.data && now - CACHE.ts < CACHE_TTL_MS) return CACHE.data;
 
   const url = process.env.SHEET_API_URL;
+  if (!url) throw new Error("SHEET_API_URL not set");
 
   const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to fetch data: ${res.status}`);
   const data = await res.json();
 
   CACHE = { data, ts: now };
