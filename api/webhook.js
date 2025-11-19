@@ -29,6 +29,7 @@ function buildFlexBubble(item) {
   const img = item.imageUrl || item.picture || "";
   const desc = item.description || item.note || "";
   const arth = item.architect || "";
+  const originalName = item.altName || "";
   const lat = item.latitude || item.lat;
   const lng = item.longitude || item.lng;
 
@@ -78,10 +79,18 @@ function buildFlexBubble(item) {
           ? [
               {
                 type: "text",
-                text: arth,
+                text: originalName,
                 wrap: true,
                 size: "sm",
                 color: "#E7DBCE",
+                margin: "sm"
+              },
+              {
+                type: "text",
+                text: arth,
+                wrap: true,
+                size: "sm",
+                color: "#ffffff",
                 margin: "sm"
               }
             ]
