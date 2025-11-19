@@ -150,10 +150,10 @@ function buildFlexMessageFromResults(results) {
   bubbles.push(buildMapEntranceBubble());
 
   // 其餘：建築資料
-  results.forEach(it => {
-    bubbles.push(buildFlexBubble(it));
+  results.forEach(item => {
+    bubbles.push(buildFlexBubble(item));
   });
-
+  
   return {
     type: "flex",
     altText: "附近的設計建築",
@@ -163,6 +163,7 @@ function buildFlexMessageFromResults(results) {
     }
   };
 }
+
 
 
 
