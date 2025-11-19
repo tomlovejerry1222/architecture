@@ -143,9 +143,70 @@ function buildFlexBubble(item) {
 //   };
 // }
 
+function buildMapEntranceBubble() {
+  return {
+    type: "bubble",
+    size: "mega",
+    hero: {
+      type: "image",
+      url: "https://i.imgur.com/3ZQ3Z4D.png", // 你可以換成你的首頁地圖預覽圖
+      size: "full",
+      aspectRatio: "20:13",
+      aspectMode: "cover"
+    },
+    body: {
+      type: "box",
+      layout: "vertical",
+      contents: [
+        {
+          type: "text",
+          text: "查看完整地圖",
+          weight: "bold",
+          size: "xl",
+          wrap: true
+        },
+        {
+          type: "text",
+          text: "點擊進入互動地圖，查看所有建築標點",
+          size: "sm",
+          color: "#666666",
+          wrap: true,
+          margin: "md"
+        }
+      ]
+    },
+    footer: {
+      type: "box",
+      layout: "vertical",
+      spacing: "sm",
+      contents: [
+        {
+          type: "button",
+          action: {
+            type: "uri",
+            label: "查看地圖",
+            uri: `${BASE_URL}/map` // ← 你地圖頁的網址，例如 https://architecture-h7wp.vercel.app/map
+          },
+          style: "primary",
+          color: "#3B82F6"
+        }
+      ]
+    }
+  };
+}
+
+
 function buildFlexMessageFromResults(results) {
 
-  const bubbles = results.map(item => buildFlexBubble(item));
+  const bubbles = [];
+
+  // 1. 地圖入口卡片（第一張）
+  bubbles.push(buildMapEntranceBubble());
+
+  // 2. 建築資料卡片（逐一加入）
+  results.forEach(it => {
+    bubbles.push(buildFlexBubble(it));
+  });
   
   return {
     type: "flex",
