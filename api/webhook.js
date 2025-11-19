@@ -21,59 +21,118 @@ function verifySignature(bodyBuffer, signature) {
 }
 
 // 建 Flex Bubble 卡片
+// -------------------
+// Flex Bubble：範本 C（深色卡片）
+// -------------------
 function buildFlexBubble(item) {
-  // 假設 item 含 name, imageUrl, latitude, longitude, description, link, id
   const title = item.name || item.caseName || "未命名建築";
   const img = item.imageUrl || item.picture || "";
   const desc = item.description || item.note || "";
   const lat = item.latitude || item.lat;
   const lng = item.longitude || item.lng;
-  const detailUrl = item.link || (BASE_URL ? `${BASE_URL}/detail/${item.id || encodeURIComponent(title)}` : item.googleMapUrl || "");
-  // Google Maps 導航連結
-  const mapsUrl = (lat && lng) ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}` : (item.googleMapUrl || "");
+
+  const detailUrl =
+    item.link ||
+    (BASE_URL
+      ? `${BASE_URL}/detail/${item.id || encodeURIComponent(title)}`
+      : "");
+
+  const mapsUrl =
+    lat && lng
+      ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
+      : (item.googleMapUrl || "");
 
   return {
     type: "bubble",
-    size: "micro",
-    hero: img ? {
-      type: "image",
-      url: img,
-      size: "full",
-      aspectMode: "cover",
-      aspectRatio: "16:9",
-      action: {
-        type: "uri",
-        uri: detailUrl || mapsUrl || "https://google.com"
-      }
-    } : undefined,
+    size: "mega",
+    hero: img
+      ? {
+          type: "image",
+          url: img,
+          size: "full",
+          aspectMode: "cover",
+          aspectRatio: "16:9",
+          action: {
+            type: "uri",
+            uri: detailUrl || mapsUrl || "https://google.com"
+          }
+        }
+      : undefined,
     body: {
       type: "box",
       layout: "vertical",
-      spacing: "sm",
+      spacing: "md",
+      backgroundColor: "#1C1C1C",
+      paddingAll: "12px",
       contents: [
-        { type: "text", text: title, wrap: true, weight: "bold", size: "sm" },
-        ...(desc ? [{ type: "text", text: desc, wrap: true, size: "xs", color: "#666666" }] : [])
+        {
+          type: "text",
+          text: title,
+          wrap: true,
+          weight: "bold",
+          size: "lg",
+          color: "#FFFFFF"
+        },
+        ...(desc
+          ? [
+              {
+                type: "text",
+                text: desc,
+                wrap: true,
+                size: "sm",
+                color: "#AAAAAA",
+                margin: "sm"
+              }
+            ]
+          : [])
       ]
     },
     footer: {
       type: "box",
       layout: "vertical",
+      spacing: "sm",
+      backgroundColor: "#1C1C1C",
       contents: [
         {
           type: "button",
-          action: { type: "uri", label: "查看詳情", uri: detailUrl || mapsUrl || "https://google.com" },
-          height: "sm"
+          style: "primary",
+          color: "#4C8BF5",
+          action: {
+            type: "uri",
+            label: "查看詳情",
+            uri: detailUrl || mapsUrl || "https://google.com"
+          }
         },
         {
           type: "button",
-          action: { type: "uri", label: "導航到這裡", uri: mapsUrl || detailUrl || "https://google.com" },
           style: "secondary",
-          height: "sm"
+          color: "#D9D9D9",
+          action: {
+            type: "uri",
+            label: "導航到這裡",
+            uri: mapsUrl || detailUrl || "https://google.com"
+          }
         }
       ]
     }
   };
 }
+
+// -------------------
+// Flex Carousel
+// -------------------
+function buildFlexMessageFromResults(results) {
+  const bubbles = results.map(item => buildFlexBubble(item));
+  return {
+    type: "flex",
+    altText: "附近的設計建築",
+    contents: {
+      type: "carousel",
+      contents: bubbles
+    }
+  };
+}
+
 
 // 將 nearby API 回傳的 items 轉成 Flex message（carousel）
 function buildFlexMessageFromResults(results) {
