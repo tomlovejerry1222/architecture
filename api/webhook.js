@@ -134,16 +134,6 @@ function buildFlexMessageFromResults(results) {
 }
 
 
-// 將 nearby API 回傳的 items 轉成 Flex message（carousel）
-function buildFlexMessageFromResults(results) {
-  const bubbles = results.map(it => buildFlexBubble(it));
-  return {
-    type: "flex",
-    altText: "附近的設計建築",
-    contents: { type: "carousel", contents: bubbles }
-  };
-}
-
 // 回傳 LINE Reply API
 async function replyToLine(replyToken, messages) {
   const res = await fetch("https://api.line.me/v2/bot/message/reply", {
