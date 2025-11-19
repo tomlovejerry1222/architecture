@@ -146,13 +146,7 @@ function buildFlexBubble(item) {
 function buildFlexMessageFromResults(results) {
   const bubbles = [];
 
-  // 第一張：地圖入口卡片
-  bubbles.push(buildMapEntranceBubble());
-
-  // 其餘：建築資料
-  results.forEach(item => {
-    bubbles.push(buildFlexBubble(item));
-  });
+  const bubbles = results.map(item => buildFlexBubble(item));
   
   return {
     type: "flex",
