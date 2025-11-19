@@ -144,7 +144,6 @@ function buildFlexBubble(item) {
 // }
 
 function buildFlexMessageFromResults(results) {
-  const bubbles = [];
 
   const bubbles = results.map(item => buildFlexBubble(item));
   
