@@ -28,6 +28,7 @@ function buildFlexBubble(item) {
   const title = item.name || item.caseName || "未命名建築";
   const img = item.imageUrl || item.picture || "";
   const desc = item.description || item.note || "";
+  const arth = item.architect || "";
   const lat = item.latitude || item.lat;
   const lng = item.longitude || item.lng;
 
@@ -77,7 +78,7 @@ function buildFlexBubble(item) {
           ? [
               {
                 type: "text",
-                text: desc,
+                text: arth,
                 wrap: true,
                 size: "sm",
                 color: "#ffffff",
