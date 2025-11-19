@@ -72,7 +72,7 @@ function buildFlexBubble(item) {
           wrap: true,
           weight: "bold",
           size: "lg",
-          color: "#FFFFFF"
+          color: "#E7DBCE"
         },
         ...(desc
           ? [
@@ -81,7 +81,7 @@ function buildFlexBubble(item) {
                 text: arth,
                 wrap: true,
                 size: "sm",
-                color: "#ffffff",
+                color: "#E7DBCE",
                 margin: "sm"
               }
             ]
