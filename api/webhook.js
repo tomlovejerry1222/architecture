@@ -131,8 +131,29 @@ function buildFlexBubble(item) {
 // -------------------
 // Flex Carousel
 // -------------------
+// function buildFlexMessageFromResults(results) {
+//   const bubbles = results.map(item => buildFlexBubble(item));
+//   return {
+//     type: "flex",
+//     altText: "附近的設計建築",
+//     contents: {
+//       type: "carousel",
+//       contents: bubbles
+//     }
+//   };
+// }
+
 function buildFlexMessageFromResults(results) {
-  const bubbles = results.map(item => buildFlexBubble(item));
+  const bubbles = [];
+
+  // 第一張：地圖入口卡片
+  bubbles.push(buildMapEntranceBubble());
+
+  // 其餘：建築資料
+  results.forEach(it => {
+    bubbles.push(buildFlexBubble(it));
+  });
+
   return {
     type: "flex",
     altText: "附近的設計建築",
@@ -142,6 +163,7 @@ function buildFlexMessageFromResults(results) {
     }
   };
 }
+
 
 
 // 回傳 LINE Reply API
