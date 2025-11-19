@@ -107,7 +107,7 @@ function buildFlexBubble(item) {
         {
           type: "button",
           style: "secondary",
-          color: "#000000",
+          color: "#ffffff",
           action: {
             type: "uri",
             label: "查看詳情",
