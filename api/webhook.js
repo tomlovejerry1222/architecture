@@ -62,7 +62,7 @@ function buildFlexBubble(item) {
       type: "box",
       layout: "vertical",
       spacing: "md",
-      backgroundColor: "#1C1C1C",
+      backgroundColor: "#384337",
       paddingAll: "12px",
       contents: [
         {
@@ -80,7 +80,7 @@ function buildFlexBubble(item) {
                 text: desc,
                 wrap: true,
                 size: "sm",
-                color: "#AAAAAA",
+                color: "#ffffff",
                 margin: "sm"
               }
             ]
@@ -91,26 +91,26 @@ function buildFlexBubble(item) {
       type: "box",
       layout: "vertical",
       spacing: "sm",
-      backgroundColor: "#1C1C1C",
+      backgroundColor: "#384337",
       contents: [
         {
           type: "button",
           style: "primary",
-          color: "#4C8BF5",
+          color: "#FF5912",
           action: {
             type: "uri",
-            label: "查看詳情",
-            uri: detailUrl || mapsUrl || "https://google.com"
+            label: "導航到這裡",
+            uri: mapsUrl || detailUrl || "https://google.com"
           }
         },
         {
           type: "button",
           style: "secondary",
-          color: "#D9D9D9",
+          color: "#000000",
           action: {
             type: "uri",
-            label: "導航到這裡",
-            uri: mapsUrl || detailUrl || "https://google.com"
+            label: "查看詳情",
+            uri: detailUrl || mapsUrl || "https://google.com"
           }
         }
       ]
