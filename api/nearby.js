@@ -59,16 +59,17 @@ export default async function handler(req, res) {
 
     let lat, lng, limit = 5, max_distance_m = 200000;
 
-    if (all === "1") {
-      return res.status(200).json({
-        status: "ok",
-        mode: "all",
-        count: allData.length,
-        results: allData
-      });
-    }
+    
 
     if (req.method === "GET") {
+      if (all === "1") {
+        return res.status(200).json({
+          status: "ok",
+          mode: "all",
+          count: allData.length,
+          results: allData
+        });
+      }
       lat = parseFloat(req.query.lat);
       lng = parseFloat(req.query.lng);
       if (req.query.limit) limit = parseInt(req.query.limit);
