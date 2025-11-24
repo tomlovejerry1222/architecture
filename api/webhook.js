@@ -219,6 +219,24 @@ function buildFlexMessageFromResults(results) {
   };
 }
 
+function buildFlexMessageFromNoResults(results) {
+
+  const bubblesMap = [];
+
+
+  // 1. 地圖入口卡片（第一張）
+  bubblesMap.push(buildMapEntranceBubble());
+  
+  return {
+    type: "flex",
+    altText: "所有設計建築",
+    contents: {
+      type: "carousel",
+      contents: bubblesMap
+    }
+  };
+}
+
 
 
 
@@ -275,8 +293,8 @@ export default async function handler(req, res) {
         const results = (nearJson && nearJson.results) ? nearJson.results : [];
 
         if (results.length === 0) {
-          const flex = buildFlexMessageFromResults(results);
-          await replyToLine(replyToken, { type: "text", text: "抱歉，附近沒有符合條件的建築資料。" }, flex);
+          const flexMap = buildFlexMessageFromNoResults();
+          await replyToLine(replyToken, { type: "text", text: "抱歉，附近沒有符合條件的建築資料。" }, flexMap);
         } else {
           const flex = buildFlexMessageFromResults(results);
           await replyToLine(replyToken, flex);
