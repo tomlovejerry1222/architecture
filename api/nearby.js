@@ -47,69 +47,59 @@ async function loadData() {
   return data;
 }
 
-export default async function handler(req, res) {
+export default function handler(req, res) {
   try {
-    // 先檢查環境變數
-    if (!process.env.SHEET_API_URL) {
-      return res.status(500).json({
-        error:
-          "SHEET_API_URL is undefined. 請確認 Vercel Environment Variables 是否正確設定。",
-      });
-    }
-
-    // let lat, lng, limit = 5, max_distance_m = 200000;
     const { lat, lng, limit = 20, max_distance_m = 3000 } = req.query;
 
+    // ------------------------------------------------------
+    // 🆕 方案 B：all=1 → 回傳全部建築（Leaflet 載入用）
+    // ------------------------------------------------------
     if (req.query.all === "1") {
       return res.status(200).json({
         status: "ok",
-        results: data  // data = 你原本讀取的建築資料
+        results: data
       });
     }
-    
-    if (req.method === "GET") {
-      lat = parseFloat(req.query.lat);
-      lng = parseFloat(req.query.lng);
-      if (req.query.limit) limit = parseInt(req.query.limit);
-      if (req.query.max_distance_m) max_distance_m = parseInt(req.query.max_distance_m);
+    // ------------------------------------------------------
+
+    // 沒有 lat / lng → 無效
+    if (!lat || !lng) {
+      return res.status(400).json({
+        status: "error",
+        message: "missing lat/lng"
+      });
     }
 
-    if (Number.isNaN(lat) || Number.isNaN(lng)) {
-      return res.status(400).json({ error: "Missing lat or lng" });
-    }
+    const userLat = parseFloat(lat);
+    const userLng = parseFloat(lng);
 
-    const data = await loadData();
-
-    const normalized = data
+    // 計算距離
+    let list = data
       .map((item) => {
-        const latitude = parseFloat(item.latitude ?? item.lat);
-        const longitude = parseFloat(item.longitude ?? item.lng);
-        if (!latitude || !longitude) return null;
-        return {
-          ...item,
-          latitude,
-          longitude,
-        };
+        const d = distance(
+          userLat,
+          userLng,
+          item.latitude || item.lat,
+          item.longitude || item.lng
+        );
+
+        return { ...item, distance: d };
       })
-      .filter(Boolean);
+      .filter((x) => x.distance <= max_distance_m);
 
-    const results = normalized
-      .map((item) => ({
-        ...item,
-        distance_m: Math.round(
-          haversine(lat, lng, item.latitude, item.longitude)
-        ),
-      }))
-      .filter((x) => x.distance_m <= max_distance_m)
-      .sort((a, b) => a.distance_m - b.distance_m)
-      .slice(0, limit);
+    // 排序
+    list.sort((a, b) => a.distance - b.distance);
 
-    res.status(200).json({
+    // 限制回傳筆數
+    list = list.slice(0, Number(limit));
+
+    return res.status(200).json({
       status: "ok",
-      query: { lat, lng, limit, max_distance_m },
-      results,
+      query: req.query,
+      results: list
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    return res.status(500).json({ status: "error", message: err.message });
   }
 }
