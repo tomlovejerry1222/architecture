@@ -185,7 +185,7 @@ function buildMapEntranceBubble() {
           action: {
             type: "uri",
             label: "查看地圖",
-            uri: `${BASE_URL}/map` // ← 你地圖頁的網址，例如 https://architecture-h7wp.vercel.app/map
+            uri: `${BASE_URL}/map/index.html` // ← 你地圖頁的網址，例如 https://architecture-h7wp.vercel.app/map
           },
           style: "primary",
           color: "#3B82F6"
