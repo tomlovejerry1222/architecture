@@ -1,41 +1,61 @@
-<!-- 地圖頁模板 A：極簡風 -->
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>RwaRwaSol 地圖（風格 A）</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<style>
-body, html { margin: 0; padding: 0; height: 100%; }
-#map { width: 100%; height: 100vh; }
-.marker-title { font-weight: bold; margin-bottom: 4px; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>建築地圖 | RwaRwaSol</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+    #map {
+      height: 100vh;
+      width: 100vw;
+    }
+  </style>
 </head>
 <body>
-<div id="map"></div>
+  <div id="map"></div>
 
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-const map = L.map('map').setView([25.033, 121.565], 13);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-maxZoom: 19,
-}).addTo(map);
+  <script>
+    async function init() {
+      const apiUrl = "https://architecture-h7wp.vercel.app/api/nearby?lat=25.03&lng=121.56&limit=20000";
 
+      const res = await fetch(apiUrl);
+      const data = await res.json();
+      const results = data.results || [];
 
-fetch('/api/all-places')
-.then(res => res.json())
-.then(data => {
-data.results.forEach(item => {
-const marker = L.marker([item.lat, item.lng]).addTo(map);
-marker.bindPopup(`
-<div class="marker-title">${item.caseName}</div>
-<div>${item.author || ''}</div>
-<a href="/place/${item.id}" target="_blank">查看介紹</a>
-`);
-});
-});
-</script>
+      // 初始化地圖
+      const map = L.map("map").setView([25.033964, 121.564468], 12);
+
+      // 圖資
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 20,
+      }).addTo(map);
+
+      // 標記所有建築
+      results.forEach(item => {
+        if (!item.lat || !item.lng) return;
+
+        const marker = L.marker([item.lat, item.lng]).addTo(map);
+        marker.bindPopup(`
+          <b>${item.caseName || item.name}</b><br>
+          ${item.author || ''}<br><br>
+          <a href="https://www.google.com/maps/?q=${item.lat},${item.lng}" target="_blank">Google 導航</a>
+        `);
+      });
+    }
+
+    init();
+  </script>
 </body>
 </html>
