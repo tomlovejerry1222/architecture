@@ -63,7 +63,7 @@ export default async function handler(req, res) {
 
     if (req.method === "GET") {
       if (all === "1") {
-        return res.status(200).json({
+        return req.status(200).json({
           status: "ok",
           mode: "all",
           count: allData.length,
