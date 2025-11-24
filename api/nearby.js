@@ -29,7 +29,6 @@ async function loadData() {
   const url = process.env.SHEET_API_URL;
 
   if (!url) {
-    // 如果環境變數沒設定，回傳清楚錯誤
     throw new Error(
       "SHEET_API_URL is undefined. 請確認 Vercel Environment Variables 是否正確設定。"
     );
@@ -42,14 +41,12 @@ async function loadData() {
   }
 
   const data = await res.json();
-
   CACHE = { data, ts: now };
   return data;
 }
 
 export default async function handler(req, res) {
   try {
-    // 先檢查環境變數
     if (!process.env.SHEET_API_URL) {
       return res.status(500).json({
         error:
@@ -57,6 +54,37 @@ export default async function handler(req, res) {
       });
     }
 
+    /** --------------------------
+     * NEW：all=1 → 直接回傳全部資料
+     * -------------------------- */
+    const returnAll = req.query.all === "1";
+
+    const rawData = await loadData();
+    const normalized = rawData
+      .map((item) => {
+        const latitude = parseFloat(item.latitude ?? item.lat);
+        const longitude = parseFloat(item.longitude ?? item.lng);
+        if (!latitude || !longitude) return null;
+        return {
+          ...item,
+          latitude,
+          longitude,
+        };
+      })
+      .filter(Boolean);
+
+    if (returnAll) {
+      return res.status(200).json({
+        status: "ok",
+        mode: "all",
+        count: normalized.length,
+        results: normalized,
+      });
+    }
+
+    /** --------------------------
+     * 以下為原本的附近搜尋
+     * -------------------------- */
     let lat, lng, limit = 5, max_distance_m = 200000;
 
     if (req.method === "GET") {
@@ -69,21 +97,6 @@ export default async function handler(req, res) {
     if (Number.isNaN(lat) || Number.isNaN(lng)) {
       return res.status(400).json({ error: "Missing lat or lng" });
     }
-
-    const data = await loadData();
-
-    const normalized = data
-      .map((item) => {
-        const latitude = parseFloat(item.latitude ?? item.lat);
-        const longitude = parseFloat(item.longitude ?? item.lng);
-        if (!latitude || !longitude) return null;
-        return {
-          ...item,
-          latitude,
-          longitude,
-        };
-      })
-      .filter(Boolean);
 
     const results = normalized
       .map((item) => ({
