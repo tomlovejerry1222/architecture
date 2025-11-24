@@ -200,13 +200,14 @@ function buildFlexMessageFromResults(results) {
 
   const bubbles = [];
 
-  // 1. 地圖入口卡片（第一張）
-  bubbles.push(buildMapEntranceBubble());
 
   // 2. 建築資料卡片（逐一加入）
   results.forEach(it => {
     bubbles.push(buildFlexBubble(it));
   });
+
+  // 1. 地圖入口卡片（第一張）
+  bubbles.push(buildMapEntranceBubble());
   
   return {
     type: "flex",
