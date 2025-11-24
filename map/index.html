@@ -155,6 +155,19 @@
         .bindPopup("你在這裡")
         .openPopup();
     });
+
+    fetch("https://architecture-livid.vercel.app/api/nearby?all=1")
+    .then(res => res.json())
+    .then(json => {
+      json.results.forEach(item => {
+        if (!item.latitude || !item.longitude) return;
+  
+        L.marker([item.latitude, item.longitude])
+          .addTo(map)
+          .bindPopup(`<b>${item.name}</b><br>${item.architect || ''}`);
+      });
+    });
+
   </script>
 </body>
 </html>
