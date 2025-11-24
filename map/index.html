@@ -1,87 +1,41 @@
+<!-- 地圖頁模板 A：極簡風 -->
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
-  <title>RwaRwaSol 建築地圖</title>
-
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-
-  <style>
-    body, html {
-      margin: 0;
-      height: 100%;
-      width: 100%;
-    }
-    #map {
-      height: 100%;
-      width: 100%;
-    }
-    .infoBox {
-      font-size: 14px;
-      line-height: 1.4;
-    }
-    .infoBox img {
-      width: 100%;
-      border-radius: 8px;
-      margin-bottom: 5px;
-    }
-    .leaflet-popup-content-wrapper {
-      padding: 8px;
-      border-radius: 12px;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RwaRwaSol 地圖（風格 A）</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+body, html { margin: 0; padding: 0; height: 100%; }
+#map { width: 100%; height: 100vh; }
+.marker-title { font-weight: bold; margin-bottom: 4px; }
+</style>
 </head>
 <body>
-
 <div id="map"></div>
 
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  // 你的 SheetBest API（全部建築資料）
-  const SHEET_API = "https://api.sheetbest.com/sheets/f78436e4-a524-4dfb-966a-92d6aca7367e";
+const map = L.map('map').setView([25.033, 121.565], 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+maxZoom: 19,
+}).addTo(map);
 
-  // 初始化地圖（預設台北）
-  const map = L.map("map").setView([25.033, 121.565], 13);
 
-  // 使用 OSM 免費地圖圖磚
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 18,
-  }).addTo(map);
-
-  // 抓建築資料
-  async function loadData() {
-    const res = await fetch(SHEET_API);
-    const data = await res.json();
-
-    data.forEach(item => {
-      const lat = parseFloat(item.latitude || item.lat);
-      const lng = parseFloat(item.longitude || item.lng);
-
-      if (!lat || !lng) return;
-
-      const title = item.caseName || item.name || "未命名建築";
-      const desc = item.note || item.description || "";
-      const pic = item.picture || item.imageUrl || "";
-      const maps = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-
-      const popupHTML = `
-        <div class="infoBox">
-          ${pic ? `<img src="${pic}" />` : ""}
-          <b>${title}</b><br/>
-          <small>${desc}</small><br/><br/>
-          <a href="${maps}" target="_blank">🧭 開啟 Google 地圖導航</a>
-        </div>
-      `;
-
-      L.marker([lat, lng]).addTo(map).bindPopup(popupHTML);
-    });
-  }
-
-  loadData();
+fetch('/api/all-places')
+.then(res => res.json())
+.then(data => {
+data.results.forEach(item => {
+const marker = L.marker([item.lat, item.lng]).addTo(map);
+marker.bindPopup(`
+<div class="marker-title">${item.caseName}</div>
+<div>${item.author || ''}</div>
+<a href="/place/${item.id}" target="_blank">查看介紹</a>
+`);
+});
+});
 </script>
-
 </body>
 </html>
