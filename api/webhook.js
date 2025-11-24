@@ -149,7 +149,7 @@ function buildMapEntranceBubble() {
     size: "mega",
     hero: {
       type: "image",
-      url: "https://i.imgur.com/3ZQ3Z4D.png", // 你可以換成你的首頁地圖預覽圖
+      url: "https://architecture-livid.vercel.app/img/map-preview.jpg", // 你可以換成你的首頁地圖預覽圖
       size: "full",
       aspectRatio: "20:13",
       aspectMode: "cover"
@@ -185,7 +185,7 @@ function buildMapEntranceBubble() {
           action: {
             type: "uri",
             label: "查看地圖",
-            uri: `${BASE_URL}/map/index.html` // ← 你地圖頁的網址，例如 https://architecture-h7wp.vercel.app/map
+            uri: "https://architecture-livid.vercel.app/map" // ← 你地圖頁的網址，例如 https://architecture-h7wp.vercel.app/map
           },
           style: "primary",
           color: "#3B82F6"
