@@ -57,9 +57,17 @@ export default async function handler(req, res) {
       });
     }
 
-    let lat, lng, limit = 5, max_distance_m = 200000;
+    // let lat, lng, limit = 5, max_distance_m = 200000;
+    const { lat, lng, limit = 5, max_distance_m = 20000, all } = req.query;
 
-    
+    if (all === "1") {
+      return res.status(200).json({
+        status: "ok",
+        mode: "all",
+        count: rep.length,
+        results: rep
+      });
+    }
 
     if (req.method === "GET") {
       lat = parseFloat(req.query.lat);
