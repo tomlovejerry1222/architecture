@@ -3,59 +3,158 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>建築地圖 | RwaRwaSol</title>
+  <title>RwaRwaSol - 建築互動地圖</title>
 
   <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
 
   <style>
-    body, html {
+    body {
       margin: 0;
-      padding: 0;
-      height: 100%;
+      background: #111;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+      color: #eee;
     }
+
     #map {
-      height: 100vh;
       width: 100vw;
+      height: 100vh;
+    }
+
+    /* 深色模式的 popup 樣式 */
+    .leaflet-popup-content-wrapper {
+      background: #222;
+      color: #eee;
+      border-radius: 8px;
+      border: 1px solid #333;
+    }
+
+    .leaflet-popup-tip {
+      background: #222;
+    }
+
+    /* 定位按鈕 */
+    .locate-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      background: #1e1e1e;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      border: 1px solid #333;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    }
+
+    .locate-btn:hover {
+      background: #333;
     }
   </style>
 </head>
+
 <body>
   <div id="map"></div>
 
+  <!-- 定位按鈕 -->
+  <div class="locate-btn" onclick="locateUser()">📍 定位到我</div>
+
   <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+  </script>
 
   <script>
-    async function init() {
-      const apiUrl = "https://architecture-livid.vercel.app/api/nearby?lat=25.03&lng=121.56&limit=20000";
+    // 你的 Vercel API URL
+    const API_URL = "https://architecture-livid.vercel.app/api/nearby?all=1";
 
-      const res = await fetch(apiUrl);
-      const data = await res.json();
-      const results = data.results || [];
+    // 初始化地圖（中心設在台北）
+    const map = L.map("map", {
+      zoomControl: true,
+      scrollWheelZoom: true,
+    }).setView([25.033, 121.565], 13);
 
-      // 初始化地圖
-      const map = L.map("map").setView([25.033964, 121.564468], 12);
+    // 深色地圖底圖（Carto Dark Matter）
+    L.tileLayer(
+      "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+      {
+        attribution: "&copy; CARTO",
+        maxZoom: 19,
+      }
+    ).addTo(map);
 
-      // 圖資
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 20,
-      }).addTo(map);
+    // 藍色 Marker Icon
+    const blueIcon = new L.Icon({
+      iconUrl:
+        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
+      shadowUrl:
+        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41],
+    });
 
-      // 標記所有建築
-      results.forEach(item => {
-        if (!item.lat || !item.lng) return;
+    // 載入建築資料
+    async function loadMarkers() {
+      try {
+        const res = await fetch(API_URL);
+        const json = await res.json();
 
-        const marker = L.marker([item.lat, item.lng]).addTo(map);
-        marker.bindPopup(`
-          <b>${item.caseName || item.name}</b><br>
-          ${item.author || ''}<br><br>
-          <a href="https://www.google.com/maps/?q=${item.lat},${item.lng}" target="_blank">Google 導航</a>
-        `);
-      });
+        if (!json.results || json.results.length === 0) {
+          console.log("沒有資料");
+          return;
+        }
+
+        json.results.forEach((item) => {
+          if (!item.lat || !item.lng) return;
+
+          const marker = L.marker([item.lat, item.lng], {
+            icon: blueIcon,
+          }).addTo(map);
+
+          const popupHTML = `
+            <div style="padding:4px 0">
+              <strong style="font-size:16px">${item.caseName || "未命名建築"}</strong><br/>
+              <span style="font-size:13px;color:#aaa">作者：${item.author || "未知"}</span><br/>
+              <span style="font-size:13px;color:#aaa">年份：${item.year || "不詳"}</span><br/><br/>
+              <a href="${item.url || "#"}" target="_blank" style="
+                color:#4facff;text-decoration:none;">查看詳細介紹 →</a>
+            </div>
+          `;
+
+          marker.bindPopup(popupHTML);
+        });
+      } catch (e) {
+        console.error("API 錯誤：", e);
+      }
     }
 
-    init();
+    loadMarkers();
+
+    // 定位使用者
+    function locateUser() {
+      map.locate({ setView: true, maxZoom: 16 });
+    }
+
+    // 定位成功時顯示 Marker
+    map.on("locationfound", function (e) {
+      L.circleMarker(e.latlng, {
+        radius: 8,
+        color: "#00c8ff",
+        fillColor: "#00c8ff",
+        fillOpacity: 0.8,
+      })
+        .addTo(map)
+        .bindPopup("你在這裡")
+        .openPopup();
+    });
   </script>
 </body>
 </html>
