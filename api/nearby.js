@@ -57,7 +57,15 @@ export default async function handler(req, res) {
       });
     }
 
-    let lat, lng, limit = 5, max_distance_m = 200000;
+    // let lat, lng, limit = 5, max_distance_m = 200000;
+    const { lat, lng, limit = 20, max_distance_m = 3000 } = req.query;
+
+    if (req.query.all === "1") {
+      return res.status(200).json({
+        status: "ok",
+        results: data  // data = 你原本讀取的建築資料
+      });
+    }
     
     if (req.method === "GET") {
       lat = parseFloat(req.query.lat);
