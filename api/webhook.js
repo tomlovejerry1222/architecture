@@ -294,7 +294,7 @@ export default async function handler(req, res) {
 
         if (results.length === 0) {
           const flexMap = buildFlexMessageFromNoResults();
-          await replyToLine(replyToken, { type: "text", text: "抱歉，附近沒有符合條件的建築資料。" }, flexMap);
+          await replyToLine(replyToken, flexMap, { type: "text", text: "抱歉，附近沒有符合條件的建築資料。" });
         } else {
           const flex = buildFlexMessageFromResults(results);
           await replyToLine(replyToken, flex);
