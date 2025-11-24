@@ -64,8 +64,8 @@ export default async function handler(req, res) {
       return res.status(200).json({
         status: "ok",
         mode: "all",
-        count: rep.length,
-        results: rep
+        count: res.length,
+        results: res
       });
     }
 
